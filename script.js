@@ -3,21 +3,38 @@
  * Professional JavaScript implementation with modular design
  */
 
-// Constants
-const VALID_MOVES = ['r', 'p', 's'];
-const MOVE_MAPPING = {
-  'rock': 'r',
-  'paper': 'p',
-  'scissors': 's'
+/**
+ * Configuration object containing all application constants
+ * @typedef {Object} Config
+ * @property {string[]} VALID_MOVES - Valid move abbreviations
+ * @property {Object.<string, string>} MOVE_MAPPING - Mapping from full names to abbreviations
+ * @property {Object.<string, string>} EMOJI_MAP - Mapping from moves to emoji HTML
+ * @property {number} DEFAULT_SPEED_MULTIPLIER - Default animation speed multiplier
+ * @property {number} MIN_ANIMATION_DURATION - Minimum animation duration in seconds
+ * @property {string} MATRIX_CHARS - Characters used for matrix rain effect
+ * @property {string} API_BASE_URL - Base URL for Google Sheets API
+ * @property {number} ANIMATION_DELAY - Delay between rounds in milliseconds
+ * @property {number} MATCH_DELAY - Delay between matches in milliseconds
+ */
+const CONFIG = {
+  VALID_MOVES: ['r', 'p', 's'],
+  MOVE_MAPPING: {
+    'rock': 'r',
+    'paper': 'p',
+    'scissors': 's'
+  },
+  EMOJI_MAP: {
+    r: '<img src="./img/rpc-png.img/rock100.png" alt="Rock" />',
+    p: '<img src="./img/rpc-png.img/paper100.png" alt="Paper" />',
+    s: '<img src="./img/rpc-png.img/scissors100.png" alt="Scissors" />'
+  },
+  DEFAULT_SPEED_MULTIPLIER: 1,
+  MIN_ANIMATION_DURATION: 0.3,
+  MATRIX_CHARS: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()_+-=[]{}|;:,.<>?",
+  API_BASE_URL: 'https://docs.google.com/spreadsheets/d/',
+  ANIMATION_DELAY: 300,
+  MATCH_DELAY: 200
 };
-const EMOJI_MAP = {
-  r: '<img src="./img/rpc-png.img/rock100.png" alt="Rock" />',
-  p: '<img src="./img/rpc-png.img/paper100.png" alt="Paper" />',
-  s: '<img src="./img/rpc-png.img/scissors100.png" alt="Scissors" />'
-};
-const DEFAULT_SPEED_MULTIPLIER = 1;
-const MIN_ANIMATION_DURATION = 0.3;
-const MATRIX_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()_+-=[]{}|;:,.<>?";
 
 /**
  * Player class representing a tournament participant
@@ -78,7 +95,7 @@ class Player {
 class Tournament {
   constructor() {
     this.players = [];
-    this.speedMultiplier = DEFAULT_SPEED_MULTIPLIER;
+    this.speedMultiplier = CONFIG.DEFAULT_SPEED_MULTIPLIER;
     this.isRunning = false;
   }
 
@@ -154,7 +171,7 @@ class Tournament {
         const name = row[1]?.trim() || "";
         const moves = row.slice(2).map(move => {
           const trimmed = move.trim();
-          return MOVE_MAPPING[trimmed] || trimmed;
+          return CONFIG.MOVE_MAPPING[trimmed] || trimmed;
         }).filter(move => move);
 
         return name ? new Player(name, moves) : null;
@@ -222,14 +239,14 @@ class Tournament {
       }
 
       UI.showRoundAnimation(player1.name, player2.name, move1, move2, winner);
-      await this.delay(300 / this.speedMultiplier);
+      await this.delay(CONFIG.ANIMATION_DELAY / this.speedMultiplier);
     }
 
     const matchResult = this.getMatchResult(p1Wins, p2Wins);
     player1.recordMatch(player2.name, matchResult.player1Result, p1Wins, p2Wins, ties);
     player2.recordMatch(player1.name, matchResult.player2Result, p2Wins, p1Wins, ties);
 
-    await this.delay(200 / this.speedMultiplier);
+    await this.delay(CONFIG.MATCH_DELAY / this.speedMultiplier);
   }
 
   /**
@@ -239,7 +256,7 @@ class Tournament {
    * @returns {number} 1 if player1 wins, 2 if player2 wins, 0 for tie
    */
   determineWinner(move1, move2) {
-    if (!VALID_MOVES.includes(move1) || !VALID_MOVES.includes(move2)) return 0;
+    if (!CONFIG.VALID_MOVES.includes(move1) || !CONFIG.VALID_MOVES.includes(move2)) return 0;
     if (move1 === move2) return 0;
 
     const winConditions = {
@@ -303,7 +320,7 @@ class Tournament {
     const chars = document.querySelectorAll(".matrix-char");
     chars.forEach(char => {
       const baseDuration = parseFloat(char.style.animationDuration) || 1;
-      const newDuration = Math.max(baseDuration / multiplier, MIN_ANIMATION_DURATION);
+      const newDuration = Math.max(baseDuration / multiplier, CONFIG.MIN_ANIMATION_DURATION);
       char.style.animationDuration = `${newDuration}s`;
     });
   }
@@ -325,8 +342,6 @@ class UI {
   static elements = {
     sheetUrl: () => document.getElementById("sheetUrl"),
     sheetName: () => document.getElementById("sheetName"),
-    sheetDate: () => document.getElementById("sheetDate"),
-    sheetTime: () => document.getElementById("sheetTime"),
     loading: () => document.getElementById("loading"),
     progressBar: () => document.getElementById("progress-bar"),
     sheetData: () => document.getElementById("sheetData"),
@@ -440,9 +455,9 @@ class UI {
     this.elements.animation().innerHTML = `
       <div style="display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;">
         <div>${p1Display}</div>
-        <div>${EMOJI_MAP[move1]}</div>
+        <div>${CONFIG.EMOJI_MAP[move1]}</div>
         <div style="font-size:1.5rem;">vs</div>
-        <div>${EMOJI_MAP[move2]}</div>
+        <div>${CONFIG.EMOJI_MAP[move2]}</div>
         <div>${p2Display}</div>
       </div>
     `;
@@ -463,6 +478,51 @@ class UI {
   static updateSpeedLabel(multiplier) {
     this.elements.speedLabel().textContent = `${multiplier.toFixed(1)}×`;
   }
+}
+
+/**
+ * Parses time input to 24-hour format (HH:MM)
+ * Accepts both 12-hour (e.g., "12:00 PM") and 24-hour (e.g., "14:00") formats
+ * @param {string} timeStr - Time string to parse
+ * @returns {string} Time in 24-hour HH:MM format
+ */
+function parseTime(timeStr) {
+  const trimmed = timeStr.trim();
+
+  // Check if it's 12-hour format (contains AM/PM)
+  const twelveHourRegex = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i;
+  const match = trimmed.match(twelveHourRegex);
+
+  if (match) {
+    let [_, hours, minutes, period] = match;
+    hours = parseInt(hours, 10);
+    minutes = parseInt(minutes, 10);
+
+    if (period.toUpperCase() === 'PM' && hours !== 12) {
+      hours += 12;
+    } else if (period.toUpperCase() === 'AM' && hours === 12) {
+      hours = 0;
+    }
+
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  }
+
+  // Assume it's already 24-hour format (HH:MM)
+  const twentyFourHourRegex = /^(\d{1,2}):(\d{2})$/;
+  const match24 = trimmed.match(twentyFourHourRegex);
+
+  if (match24) {
+    let [_, hours, minutes] = match24;
+    hours = parseInt(hours, 10);
+    minutes = parseInt(minutes, 10);
+
+    if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    }
+  }
+
+  // Invalid format
+  throw new Error(`Invalid time format: ${timeStr}. Use HH:MM or H:MM AM/PM.`);
 }
 
 // Global functions for UI interactions
@@ -510,7 +570,7 @@ document.getElementById("speedSlider").addEventListener("input", (e) => {
 window.addEventListener("load", () => {
   const now = new Date();
   UI.elements.sheetDate().value = now.toISOString().split("T")[0];
-  UI.elements.sheetTime().value = now.toTimeString().slice(0, 5);
+  UI.elements.sheetTime().value = "12:00 PM";
   // createMatrixRain(); // Commented out
 });
 
