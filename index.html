@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rock Paper Scissors Tournament</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+
+  <body>
+    <div id="matrix-bg"></div>
+    <div class="container">
+      <h1>Rock Paper Scissors Tournament</h1>
+
+      <div class="input-section">
+        <input
+          id="sheetUrl"
+          placeholder="Google Sheet URL"
+          value="https://docs.google.com/spreadsheets/d/1CugngvkR-1pNnpGy5km1Ce1vUjibxP-j3hP-HrTVwyo/edit?gid=1388952870#gid=1388952870"
+        />
+        <input id="sheetName" placeholder="Sheet Name" />
+        <input id="sheetDate" type="date" />
+        <input id="sheetTime" type="time" />
+        <button onclick="loadSheet()">Load Tournament</button>
+      </div>
+
+      <div class="slider-section">
+        <label for="speedSlider">
+          Speed: <span id="speedLabel">1.0×</span>
+        </label>
+        <br />
+        <input
+          type="range"
+          id="speedSlider"
+          min="0.25"
+          max="10"
+          step="0.25"
+          value="1"
+        />
+      </div>
+
+      <div id="progress"><div id="progress-bar"></div></div>
+      <div id="loading" class="loading">Loading tournament data...</div>
+      <div id="animation"></div>
+      <div id="sheetData"></div>
+      <div id="result"></div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

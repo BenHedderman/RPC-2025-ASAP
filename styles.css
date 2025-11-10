@@ -1,0 +1,320 @@
+:root {
+  --accent: #00ff80;
+  --accent-hover: #00cc66;
+  --bg-dark: #0b0b0b;
+  --bg-card: rgba(18, 18, 18, 0.9);
+  --border: #00aa44;
+  --text: #e0e0e0;
+  --green-bg: linear-gradient(135deg, #004400 0%, #0b0b0b 50%, #004400 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Ink Free", sans-serif;
+  margin: 0;
+  padding: 20px;
+  background: var(--green-bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  position: relative;
+}
+
+#matrix-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -1;
+  background: transparent;
+  overflow: hidden;
+}
+
+.matrix-char {
+  position: absolute;
+  color: #00ff00;
+  font-family: "Courier New", monospace;
+  font-size: 20px;
+  opacity: 0.8;
+  text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 30px #00ff00;
+  animation: fall linear infinite;
+  animation-duration: calc(2s + var(--fall-speed));
+}
+
+.matrix-char:nth-child(odd) {
+  opacity: 0.6;
+  animation-duration: calc(3s + var(--fall-speed));
+}
+
+@keyframes fall {
+  from {
+    transform: translateY(-100vh);
+  }
+  to {
+    transform: translateY(100vh);
+  }
+}
+
+.container {
+  width: 100%;
+  max-width: 1100px;
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  border: 1px solid var(--border);
+  padding: 40px;
+  box-shadow: 0 0 25px rgba(0, 255, 100, 0.25), inset 0 0 25px rgba(0, 255, 100, 0.1);
+  animation: fadeIn 1s ease forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+h1 {
+  color: var(--accent);
+  margin-bottom: 25px;
+  font-size: 2.5em;
+  letter-spacing: 1px;
+  text-align: center;
+  text-shadow: 0 0 10px var(--accent), 0 0 20px var(--accent), 0 0 30px var(--accent);
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    text-shadow: 0 0 10px var(--accent), 0 0 20px var(--accent), 0 0 30px var(--accent);
+  }
+  to {
+    text-shadow: 0 0 20px var(--accent), 0 0 30px var(--accent), 0 0 40px var(--accent);
+  }
+}
+
+.input-section {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+
+.input-section input {
+  padding: 12px;
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  background: #000;
+  color: #fff;
+  font-size: 16px;
+  width: 240px;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.input-section input:focus {
+  outline: none;
+  border-color: var(--accent-hover);
+  box-shadow: 0 0 15px var(--accent), 0 0 30px var(--accent);
+}
+
+.input-section button {
+  padding: 12px 28px;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  color: #000;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+  box-shadow: 0 0 10px rgba(0, 255, 128, 0.5);
+}
+
+.input-section button:hover {
+  background: var(--accent-hover);
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(0, 255, 128, 0.8), 0 0 40px rgba(0, 255, 128, 0.6);
+}
+
+.slider-section {
+  margin-top: 10px;
+  color: var(--accent);
+  font-weight: 500;
+  text-align: center;
+}
+
+.slider-section input[type="range"] {
+  width: 60%;
+  margin-top: 10px;
+  accent-color: var(--accent);
+}
+
+#progress {
+  width: 80%;
+  margin: 20px auto;
+  height: 15px;
+  background: #1a1a1a;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+#progress-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  transition: width 0.4s ease;
+}
+
+/* === Center Animation Section === */
+#animation {
+  font-size: 2rem;
+  margin: 25px 0;
+  color: var(--accent);
+  min-height: 120px;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#animation img {
+  height: 80px;
+  width: auto;
+  vertical-align: middle;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(26, 26, 26, 0.9);
+  border: 1px solid var(--border);
+  box-shadow: 0 0 20px rgba(0, 255, 80, 0.2), inset 0 0 10px rgba(0, 255, 80, 0.05);
+  border-radius: 10px;
+  overflow: hidden;
+  text-align: center;
+  backdrop-filter: blur(5px);
+}
+
+th,
+td {
+  padding: 15px;
+  border-bottom: 1px solid #007a33;
+  text-align: center;
+  vertical-align: middle;
+  color: var(--text);
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+th {
+  background: linear-gradient(135deg, #003300, #004400);
+  color: var(--accent);
+  text-shadow: 0 0 5px var(--accent);
+}
+
+tr:hover {
+  background: rgba(0, 42, 0, 0.8);
+  transform: scale(1.01);
+}
+
+.highlight {
+  background: #004422 !important;
+  font-weight: bold;
+  color: var(--accent);
+}
+
+.hidden-row {
+  display: none;
+  background: #001f00;
+}
+
+.expandable {
+  cursor: pointer;
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+#result {
+  font-size: 1.4rem;
+  color: var(--accent);
+  margin-top: 30px;
+  text-align: center;
+}
+
+.loading {
+  font-size: 18px;
+  color: var(--accent);
+  display: none;
+  text-align: center;
+}
+
+.error {
+  color: #ff5555;
+  font-weight: bold;
+  text-align: center;
+}
+
+.underline {
+  text-decoration: underline;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #111;
+  min-width: 140px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 4px 10px rgba(0, 255, 100, 0.2);
+  z-index: 1;
+  text-align: left;
+  padding: 6px 10px;
+  right: 0;
+}
+
+.dropdown-content a {
+  color: var(--text);
+  padding: 4px 6px;
+  text-decoration: none;
+  display: block;
+  font-size: 14px;
+}
+
+.dropdown-content a:hover {
+  background-color: #002a00;
+}
+
+.show-dropdown {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2rem;
+  }
+  .input-section input {
+    width: 100%;
+  }
+  #animation img {
+    height: 60px;
+  }
+}
