@@ -103,15 +103,17 @@ class Tournament {
    * Initializes the tournament with data from Google Sheets
    * @param {string} sheetUrl - URL of the Google Sheet
    * @param {string} sheetName - Name of the sheet tab
+   * @param {Date|null} filterDateTime - Date and time to filter players (on or after this time)
    * @returns {Promise<void>}
    */
-  async initialize(sheetUrl, sheetName) {
+  async initialize(sheetUrl, sheetName, filterDateTime = null) {
     if (this.isRunning) return;
 
     try {
       this.isRunning = true;
       const data = await this.fetchSheetData(sheetUrl, sheetName);
-      this.players = this.parsePlayers(data);
+      const filteredData = filterDateTime ? this.filterRowsByDateTime(data, filterDateTime) : data;
+      this.players = this.parsePlayers(filteredData);
       this.validatePlayers();
 
       UI.showLoading(false);
@@ -158,6 +160,27 @@ class Tournament {
     }
 
     return rows.slice(1); // Skip header row
+  }
+
+  /**
+   * Filters rows by date and time
+   * @param {Array} rows - Sheet data rows
+   * @param {Date} filterDateTime - Date and time to filter (on or after this time)
+   * @returns {Array} Filtered rows
+   */
+  filterRowsByDateTime(rows, filterDateTime) {
+    return rows.filter(row => {
+      const timestampStr = row[0]?.trim(); // Timestamp is in the first column (index 0)
+      if (!timestampStr) return false;
+
+      try {
+        const rowDateTime = parseTimestamp(timestampStr);
+        return rowDateTime >= filterDateTime;
+      } catch (error) {
+        console.warn(`Skipping row due to invalid timestamp: ${timestampStr}`, error);
+        return false;
+      }
+    });
   }
 
   /**
@@ -342,6 +365,8 @@ class UI {
   static elements = {
     sheetUrl: () => document.getElementById("sheetUrl"),
     sheetName: () => document.getElementById("sheetName"),
+    sheetDate: () => document.getElementById("sheetDate"),
+    sheetTime: () => document.getElementById("sheetTime"),
     loading: () => document.getElementById("loading"),
     progressBar: () => document.getElementById("progress-bar"),
     sheetData: () => document.getElementById("sheetData"),
@@ -525,6 +550,30 @@ function parseTime(timeStr) {
   throw new Error(`Invalid time format: ${timeStr}. Use HH:MM or H:MM AM/PM.`);
 }
 
+/**
+ * Parses timestamp from sheet format "month/day/year hr:min:sec" to Date object
+ * @param {string} timestampStr - Timestamp string in "month/day/year hr:min:sec" format
+ * @returns {Date} Parsed Date object
+ */
+function parseTimestamp(timestampStr) {
+  const trimmed = timestampStr.trim();
+  const timestampRegex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})$/;
+  const match = trimmed.match(timestampRegex);
+
+  if (!match) {
+    throw new Error(`Invalid timestamp format: ${timestampStr}. Expected "month/day/year hr:min:sec".`);
+  }
+
+  const [_, month, day, year, hours, minutes, seconds] = match;
+  const date = new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10), parseInt(hours, 10), parseInt(minutes, 10), parseInt(seconds, 10));
+
+  if (isNaN(date.getTime())) {
+    throw new Error(`Invalid date in timestamp: ${timestampStr}`);
+  }
+
+  return date;
+}
+
 // Global functions for UI interactions
 function toggleDetails(name) {
   const row = document.getElementById(`details-${name}`);
@@ -569,18 +618,34 @@ document.getElementById("speedSlider").addEventListener("input", (e) => {
 
 window.addEventListener("load", () => {
   const now = new Date();
-  UI.elements.sheetDate().value = now.toISOString().split("T")[0];
-  UI.elements.sheetTime().value = "12:00 PM";
+  // UI.elements.sheetDate().value = now.toISOString().split("T")[0];
+  // UI.elements.sheetTime().value = "12:00 PM";
   // createMatrixRain(); // Commented out
 });
 
 async function loadSheet() {
   const sheetUrl = document.getElementById("sheetUrl").value.trim();
   const sheetName = document.getElementById("sheetName").value.trim();
+  const sheetDate = document.getElementById("sheetDate").value.trim();
+  const sheetTime = document.getElementById("sheetTime").value.trim();
 
   if (!sheetUrl || !sheetName) {
     alert("Please enter both the Sheet Name and URL.");
     return;
+  }
+
+  let filterDateTime = null;
+  if (sheetDate && sheetTime) {
+    try {
+      const dateStr = `${sheetDate} ${parseTime(sheetTime)}`;
+      const [datePart, timePart] = dateStr.split(' ');
+      const [year, month, day] = datePart.split('-').map(Number);
+      const [hours, minutes] = timePart.split(':').map(Number);
+      filterDateTime = new Date(year, month - 1, day, hours, minutes);
+    } catch (error) {
+      alert("Invalid date or time format. Please check your inputs.");
+      return;
+    }
   }
 
   document.getElementById("sheetData").innerHTML = "";
@@ -589,5 +654,5 @@ async function loadSheet() {
   UI.updateProgress(0);
   UI.showLoading(true);
 
-  await tournament.initialize(sheetUrl, sheetName);
+  await tournament.initialize(sheetUrl, sheetName, filterDateTime);
 }
