@@ -114,6 +114,7 @@ class Tournament {
       const data = await this.fetchSheetData(sheetUrl, sheetName);
       const filteredData = filterDateTime ? this.filterRowsByDateTime(data, filterDateTime) : data;
       this.players = this.parsePlayers(filteredData);
+      console.log("Parsed players:", this.players);
       this.validatePlayers();
 
       UI.showLoading(false);
@@ -145,7 +146,15 @@ class Tournament {
 
     const response = await fetch(fetchUrl);
     if (!response.ok) {
-      throw new Error(`Failed to fetch sheet: ${response.status}`);
+      let errorMsg = "Failed to fetch sheet.";
+      if (response.status === 403) {
+        errorMsg += " The sheet may not be public. Please publish it to the web by going to File > Share > Publish to web.";
+      } else if (response.status === 404) {
+        errorMsg += " Sheet not found. Check the URL and sheet name.";
+      } else {
+        errorMsg += ` HTTP ${response.status}.`;
+      }
+      throw new Error(errorMsg);
     }
 
     const text = await response.text();
@@ -154,6 +163,8 @@ class Tournament {
     const rows = json.table.rows.map(row =>
       row.c.map(cell => (cell?.v || "").toString().trim().toLowerCase())
     );
+
+    console.log("Fetched rows from sheet:", rows);
 
     if (rows.length <= 1) {
       throw new Error("No data found in the sheet");
@@ -169,18 +180,23 @@ class Tournament {
    * @returns {Array} Filtered rows
    */
   filterRowsByDateTime(rows, filterDateTime) {
-    return rows.filter(row => {
+    console.log(`Filtering ${rows.length} rows with filterDateTime: ${filterDateTime}`);
+    const filtered = rows.filter(row => {
       const timestampStr = row[0]?.trim(); // Timestamp is in the first column (index 0)
       if (!timestampStr) return false;
 
       try {
         const rowDateTime = parseTimestamp(timestampStr);
-        return rowDateTime >= filterDateTime;
+        const include = rowDateTime >= filterDateTime;
+        console.log(`Row timestamp: ${timestampStr} -> ${rowDateTime} >= ${filterDateTime} ? ${include}`);
+        return include;
       } catch (error) {
         console.warn(`Skipping row due to invalid timestamp: ${timestampStr}`, error);
         return false;
       }
     });
+    console.log(`Filtered to ${filtered.length} rows`);
+    return filtered;
   }
 
   /**
@@ -617,9 +633,15 @@ document.getElementById("speedSlider").addEventListener("input", (e) => {
 });
 
 window.addEventListener("load", () => {
-  const now = new Date();
-  // UI.elements.sheetDate().value = now.toISOString().split("T")[0];
-  // UI.elements.sheetTime().value = "12:00 PM";
+  // Update current date and time display
+  const updateDateTime = () => {
+    const current = new Date();
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' };
+    document.getElementById('currentDateTime').textContent = `Current Date and Time: ${current.toLocaleDateString('en-US', options)}`;
+  };
+  updateDateTime();
+  setInterval(updateDateTime, 1000); // Update every second
+
   // createMatrixRain(); // Commented out
 });
 
@@ -637,13 +659,10 @@ async function loadSheet() {
   let filterDateTime = null;
   if (sheetDate && sheetTime) {
     try {
-      const dateStr = `${sheetDate} ${parseTime(sheetTime)}`;
-      const [datePart, timePart] = dateStr.split(' ');
-      const [year, month, day] = datePart.split('-').map(Number);
-      const [hours, minutes] = timePart.split(':').map(Number);
-      filterDateTime = new Date(year, month - 1, day, hours, minutes);
+      const parsedTime = parseTime(sheetTime);
+      filterDateTime = new Date(`${sheetDate}T${parsedTime}:00`);
     } catch (error) {
-      alert("Invalid date or time format. Please check your inputs.");
+      alert(`Invalid time format: ${error.message}`);
       return;
     }
   }
